@@ -1,18 +1,20 @@
-// Copies the repository's VIDEO.json, which names the posted video, to the directory the grader reads.
-// Source: $MAKEFUN_BOT_DIR/VIDEO.json when set, else VIDEO.json beside this file.
-// Destination: $MAKEFUN_OUTPUT_DIR/VIDEO.json when set, else /output/VIDEO.json.
-// Neither run reads the network, the clock or anything else, so both runs write the same bytes.
+// Copy VIDEO.json from the bot directory (or this repo root) into the
+// scorer's output directory, creating it when missing.
+import { copyFileSync, mkdirSync } from "node:fs";
+import { join } from "node:path";
+import process from "node:process";
 
-import { copyFileSync, mkdirSync } from 'node:fs';
-import { join } from 'node:path';
-
-const sourceDir = process.env.MAKEFUN_BOT_DIR ?? import.meta.dirname;
-const outputDir = process.env.MAKEFUN_OUTPUT_DIR ?? '/output';
+const botDir = process.env.MAKEFUN_BOT_DIR ?? import.meta.dirname;
+const outDir = process.env.MAKEFUN_OUTPUT_DIR ?? "/output";
+const source = join(botDir, "VIDEO.json");
+const target = join(outDir, "VIDEO.json");
 
 try {
-  mkdirSync(outputDir, { recursive: true });
-  copyFileSync(join(sourceDir, 'VIDEO.json'), join(outputDir, 'VIDEO.json'));
+  mkdirSync(outDir, { recursive: true });
+  copyFileSync(source, target);
+  console.log(`copied ${source} -> ${target}`);
 } catch (error) {
-  console.error(`VIDEO.json could not be copied from ${sourceDir} to ${outputDir}: ${(error as Error).message}`);
+  const reason = error instanceof Error ? error.message : String(error);
+  console.error(`failed to copy VIDEO.json to ${target}: ${reason}`);
   process.exit(1);
 }
